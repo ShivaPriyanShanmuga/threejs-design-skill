@@ -25,7 +25,10 @@ const TRAY_H = 0.44;
 
 const DECAL = KEY * TAPER * 0.74;
 const LIFT_HOVER = 0.09;
-const LIFT_PRESS = -0.12;
+// Held under the finger: deep, like a real switch bottoming out.
+const LIFT_PRESS = -0.19;
+// Latched after release, so the chosen cap stays visibly down but not as far.
+const LIFT_LATCH = -0.09;
 
 export default function Keyboard({
   progressRef,
@@ -40,6 +43,7 @@ export default function Keyboard({
   const decals = useRef();
   const glow = useRef();
   const [hovered, setHovered] = useState(null);
+  const [pressed, setPressed] = useState(null);
   // The cursor is owned by Scene, which also knows whether a drag is in progress.
 
   const geometry = useMemo(() => makeKeycapGeometry(), []);
@@ -101,6 +105,19 @@ export default function Keyboard({
     caps.current.instanceColor.needsUpdate = true;
   }, [colorScratch]);
 
+  // A press can end anywhere — off the cap, off the canvas — so the release is caught
+  // on the window rather than on the mesh. Without this a cap stays stuck down when the
+  // pointer leaves it mid-press.
+  useEffect(() => {
+    const release = () => setPressed(null);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    return () => {
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+    };
+  }, []);
+
   // "hint: press a key" — a physical keypress selects the matching cap.
   useEffect(() => {
     const onKey = (e) => {
@@ -123,12 +140,18 @@ export default function Keyboard({
 
     for (let i = 0; i < N; i++) {
       const target =
-        i === selected ? LIFT_PRESS : i === hovered ? LIFT_HOVER : 0;
-      // A key should snap down and ease back — lambda 14 down, 8 up.
+        i === pressed
+          ? LIFT_PRESS
+          : i === selected
+            ? LIFT_LATCH
+            : i === hovered
+              ? LIFT_HOVER
+              : 0;
+      // A key should snap down and ease back — lambda 22 down, 9 up.
       anim[i].y = THREE.MathUtils.damp(
         anim[i].y,
         target,
-        target < anim[i].y ? 14 : 8,
+        target < anim[i].y ? 22 : 9,
         d,
       );
 
@@ -196,6 +219,10 @@ export default function Keyboard({
         args={[geometry, undefined, N]}
         castShadow
         receiveShadow
+        onPointerDown={(e) => {
+          e.stopPropagation();
+          setPressed(e.instanceId);
+        }}
         onPointerMove={(e) => {
           e.stopPropagation();
           // Mid-rotate the pointer sweeps across every cap; letting hover follow it

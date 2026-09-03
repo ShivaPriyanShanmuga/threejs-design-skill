@@ -41,7 +41,10 @@ const DRAG_SPEED = 0.0055; // radians per pixel
 // TOTAL pitch, base included.
 const PITCH_MIN = -1.05;
 const PITCH_MAX = 0.78;
-const CLICK_SLOP = 6; // px of travel before a press counts as a drag rather than a click
+// Travel before a press counts as a drag rather than a click. 6 was too tight — an
+// ordinary mouse wanders a few pixels during a click, and those clicks were being
+// swallowed, so caps never latched.
+const CLICK_SLOP = 14;
 const TWO_PI = Math.PI * 2;
 
 // The drag offset sits on top of SKILLS_PITCH, so clamp it against what the base leaves.

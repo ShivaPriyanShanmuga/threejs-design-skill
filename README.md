@@ -99,9 +99,9 @@ looking at the result. Personas and copy are fictional.
 ### [`demo-keyboard/`](demo-keyboard/) — the harder one
 
 A two-beat portfolio rebuilt from a video reference. One 3D mechanical keyboard persists across
-both beats: scroll drives it from the hero into a SKILLS view, hovering lifts a cap, and clicking
-presses it down and reveals that skill's name plus a one-liner as 3D text lying in the board's own
-plane. In the skills beat the whole thing is one rigid plane you can grab and turn on both axes
+both beats: scroll drives it from the hero into a SKILLS view, a cap sits at three depths as you
+hover, hold and choose it, and choosing one reveals that skill's name plus a one-liner as 3D text
+lying in the board's own plane. In the skills beat the whole thing is one rigid plane you can grab and turn on both axes
 with the left mouse button — board, heading and caption together — and it eases back to its pose
 when you scroll away.
 

@@ -2,8 +2,9 @@
 
 A harder test of the `threejs-design` skill: a two-beat portfolio built from a video reference,
 where one 3D mechanical keyboard persists across both. Scrolling drives it from the hero's
-three-quarter view into a SKILLS view; hovering lifts a cap, clicking presses it down and reveals
-that skill's name and a one-liner as 3D text lying in the board's own plane.
+three-quarter view into a SKILLS view. A cap sits at three depths — lifted on hover, bottomed out
+while the button is held, and latched part way down once chosen — and choosing one reveals that
+skill's name and a one-liner as 3D text lying in the board's own plane.
 
 In the skills beat the whole thing is one rigid plane you can grab: hold left mouse and drag to
 turn it on both axes, board, caption, heading and all.
@@ -68,8 +69,10 @@ clamped against what that base leaves rather than against zero.
 Five things that only matter once it moves:
 
 - **A rotate must not select a key.** Both end in a pointerup over some cap. The press records how
-  far it travelled, and anything over 6px sets a flag the click handler checks and bails on. The
+  far it travelled, and anything over 14px sets a flag the click handler checks and bails on. The
   flag is cleared on the next pointerdown, not on a timer, so it cannot race the click event.
+  That threshold started at 6px, which was too tight: an ordinary mouse wanders more than that
+  during a normal click, so real clicks were being swallowed and no cap ever latched.
 - **Hover is suppressed mid-drag.** The pointer sweeps across every cap on the way round, and
   letting hover follow it strobes the glow across the board.
 - **Text has to stay readable.** Rigidly attached, a half turn leaves the caption upside-down. It

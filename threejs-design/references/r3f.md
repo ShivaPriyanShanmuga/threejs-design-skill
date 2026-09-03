@@ -118,6 +118,24 @@ return <points geometry={geometry} material={material} />;
 To check which you have, log `mesh.current.material.uniforms === uniforms` once. If it is false and
 you are mutating the local object, your shader is frozen.
 
+**`position`, `rotation` and `scale` on a geometry element do nothing.** They are `Object3D`
+properties, and a geometry is not an `Object3D`. R3F sets them on the geometry, where nothing
+reads them, and says nothing:
+
+```jsx
+// WRONG: the torus stays in the XY plane, standing on edge
+<mesh><torusGeometry args={[0.9, 0.03, 20, 128]} rotation={[Math.PI / 2, 0, 0]} /></mesh>
+
+// Right: transform the mesh...
+<mesh rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.9, 0.03, 20, 128]} /></mesh>
+// ...or bake it into the geometry, which is what you want if it is instanced
+geo.rotateX(Math.PI / 2)
+```
+
+Worth knowing because the failure looks like a modelling mistake rather than a typo — a bezel
+that should lie flat instead cuts across the case like an equator, and you go looking at the
+geometry.
+
 ## drei, in rough order of usefulness
 
 ```jsx

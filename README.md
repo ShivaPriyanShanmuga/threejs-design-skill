@@ -52,8 +52,12 @@ the one file worth opening.
 | [`references/materials-lighting.md`](threejs-design/references/materials-lighting.md) | The pipeline that decides whether a scene reads as photographed: colour management and texture tagging, tone mapping, environment maps, the r155 lighting-unit change, shadow frusta, and tested parameter sets for brushed metal, clearcoat, transmission glass, iridescence, and sheen. |
 | [`references/shaders.md`](threejs-design/references/shaders.md) | GLSL. fbm and domain warping, fresnel, recomputing normals after displacement, `Points` with perspective-correct `gl_PointSize`, curl-noise flow fields, when to move to GPGPU, and the colour mistakes that make procedural work look cheap. |
 | [`references/scroll-motion.md`](threejs-design/references/scroll-motion.md) | Lenis and GSAP ScrollTrigger without desync, normalising and damping scroll progress, `CatmullRomCurve3` camera paths with look-ahead, `ScrollControls` vs Lenis, and reduced-motion handling. |
+| [`references/art-direction.md`](threejs-design/references/art-direction.md) | The design half. Lighting as photography rather than illumination, silhouette before material, composition and crop, colour discipline, restraint, and a table translating briefs ("premium", "editorial", "immersive") into scene decisions. |
+| [`references/working-from-references.md`](threejs-design/references/working-from-references.md) | What to do when the user says "like this" and hands you a video or a screenshot: what to extract and in what order, what is not reproducible in real time and what to substitute, and how to compare your build against the original. |
 | [`references/performance.md`](threejs-design/references/performance.md) | In priority order: measure, cap DPR, cut draw calls, stop rendering when nothing changes, compress assets, degrade adaptively. Plus disposal and a symptom-to-cause table. |
 | [`scripts/scaffold.sh`](threejs-design/scripts/scaffold.sh) | `scaffold.sh <name> <r3f\|vanilla>` — non-interactive Vite setup with a starter scene that already has the defaults baked in. |
+| [`scripts/reference.sh`](threejs-design/scripts/reference.sh) | Turns a video URL, clip or image into a contact sheet, full-size frames and a hex palette, so a reference can be read instead of guessed at. |
+| [`scripts/audit.mjs`](threejs-design/scripts/audit.mjs) | Renders a running page and reports deprecation warnings, draw calls, exposure and saturation, and bundle weight. |
 
 ## Pairs well with
 
@@ -130,6 +134,22 @@ The form is ridged-noise displacement (`1 - |fbm|`, raised to a power) shaded al
 fresnel rim, and the bloom is a fragment shader on a single quad.
 
 It also found the worst bug in the repo. See below.
+
+### [`demo-samurai/`](demo-samurai/) — the design test
+
+Built to answer a specific question: does the skill help with *design*, or only with correctness?
+A detailed brief was written first — a fictional swordsmith's watch atelier, one accent colour used
+twice, asymmetric layout, low-key product lighting — and then built against without loosening it.
+
+![A dark landing page: a machined wristwatch right of centre, headline stacked against a hard left margin](demo-samurai/docs/hero.png)
+
+The answer was **both**, usefully. The skill supplied the material sets almost verbatim, the
+environment-first lighting, `NeutralToneMapping` for a product shot, and the restraint to use no
+bloom. It supplied none of the art direction, and it did not prevent three failures that all
+looked like material problems and were not — most instructively, a matte black dial that kept
+rendering grey because the key light was pointed at it rather than raking across it.
+
+That gap is what [`art-direction.md`](threejs-design/references/art-direction.md) now covers.
 
 ### [`demo-viewer/`](demo-viewer/) — the coverage one
 

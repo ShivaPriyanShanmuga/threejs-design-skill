@@ -42,6 +42,16 @@ when the page isn't React, bundle size is tight, or you need imperative control 
 | "It looks wrong" | Diagnosis below, then the single file it points at |
 | "It's slow / phone gets hot" | `performance.md` |
 
+Two more, and they cut across the table above rather than replacing it:
+
+- **The brief describes a feeling** — premium, editorial, immersive, quiet — rather than a
+  feature. Load `references/art-direction.md`. Everything else here makes a scene correct; that
+  file is about making it look like something, and a correct scene with default art direction
+  still reads as a template with an object dropped into it.
+- **The user gave you a reference** — a video, a screenshot, a link, "like this site". Load
+  `references/working-from-references.md` first and run `scripts/reference.sh` on the media. You
+  can see images: look at the thing before building against a guess about it.
+
 ## Defaults that decide the look
 
 These are the small number of decisions that separate studio work from tutorial work. Apply them
@@ -94,8 +104,12 @@ before reaching for anything fancier.
 | Janky, stutters, drops frames | Check `renderer.info.render.calls` first, then per-frame allocations in the loop (`performance.md`) |
 | Fine on desktop, melts phones | Uncapped DPR, then post-processing passes at full resolution |
 
-## Scaffold
+## Scripts
 
-`scripts/scaffold.sh <name> <r3f|vanilla>` creates a Vite project non-interactively with the
-dependencies installed and a starter scene that already has the defaults above baked in. Use it
-to skip setup, then build the actual concept on top.
+- `scripts/scaffold.sh <name> <r3f|vanilla>` — a Vite project with the dependencies installed and
+  a starter scene that already has the defaults above baked in. Skip setup, build the concept.
+- `scripts/reference.sh <url|video|image>` — turns a reference into a contact sheet, full-size
+  frames and a palette. Read the sheet before the frames.
+- `scripts/audit.mjs <url>` — renders a running page and reports Three.js deprecation warnings,
+  draw calls, exposure and saturation, and bundle weight. A floor, not a verdict: open the
+  screenshot and look at it anyway.

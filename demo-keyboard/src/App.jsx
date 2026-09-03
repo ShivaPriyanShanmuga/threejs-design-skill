@@ -32,8 +32,12 @@ export default function App() {
     })
     // Normalise to 0–1 once, in one place; the scene damps toward it.
     lenis.on('scroll', ({ progress }) => {
-      scrollRef.current = progress || 0
-      setScrolled(progress > 0.08)
+      const p = progress || 0
+      scrollRef.current = p
+      setScrolled(p > 0.08)
+      // Leaving the section clears the pressed key: otherwise the hero keeps glowing
+      // under a selection you can no longer see. Re-setting null is a no-op in React.
+      if (p < 0.2) setSelected(null)
     })
     return () => {
       cancelAnimationFrame(raf)

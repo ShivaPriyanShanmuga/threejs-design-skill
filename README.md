@@ -70,7 +70,8 @@ A two-beat portfolio rebuilt from a video reference. One 3D mechanical keyboard 
 both beats: scroll drives it from the hero into a SKILLS view, hovering lifts a cap, and clicking
 presses it down and reveals that skill's name plus a one-liner as 3D text lying in the board's own
 plane. In the skills beat the whole thing is one rigid plane you can grab and turn on both axes
-with the left mouse button — board, heading and caption together.
+with the left mouse button — board, heading and caption together — and it eases back to its pose
+when you scroll away.
 
 ![The skills beat: the board rotated large, a pressed cap, and its caption lying in the board's plane](demo-keyboard/docs/skills.png)
 

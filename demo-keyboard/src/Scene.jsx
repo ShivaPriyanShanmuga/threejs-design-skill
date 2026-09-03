@@ -20,22 +20,33 @@ const HERO = {
   scale: 1.0,
 };
 const SKILLS = {
-  camera: new THREE.Vector3(0, 10.6, 13.4),
+  camera: new THREE.Vector3(0, 11.5, 12.2),
   target: new THREE.Vector3(0, -0.4, 0),
   board: new THREE.Vector3(0, 0, 0),
   scale: 1.08,
 };
-const SKILLS_YAW = -0.52;
+// Enough yaw that it does not read as a flat screenshot, little enough that the in-plane
+// type still reads as a line rather than a diagonal.
+const SKILLS_YAW = -0.15;
+// Tipping the plane toward the camera is what buys back legibility: the camera sits about
+// 43 degrees above it, and this adds another 13 before any foreshortening is applied.
+const SKILLS_PITCH = 0.22;
 
 // Drag only takes over once the skills beat is most of the way in, so it never fights
 // the hero's idle tumble or the mouse parallax.
 const DRAG_FROM = 0.25;
 const DRAG_SPEED = 0.0055; // radians per pixel
 // Yaw is free — it is a turntable. Pitch is clamped: past these the board shows its
-// underside and the in-plane text edge-on, which just reads as broken.
+// underside and the in-plane text edge-on, which just reads as broken. These bound the
+// TOTAL pitch, base included.
 const PITCH_MIN = -1.05;
-const PITCH_MAX = 0.62;
+const PITCH_MAX = 0.78;
 const CLICK_SLOP = 6; // px of travel before a press counts as a drag rather than a click
+const TWO_PI = Math.PI * 2;
+
+// The drag offset sits on top of SKILLS_PITCH, so clamp it against what the base leaves.
+const clampPitch = (v) =>
+  THREE.MathUtils.clamp(v, PITCH_MIN - SKILLS_PITCH, PITCH_MAX - SKILLS_PITCH);
 
 /**
  * RoomEnvironment rather than an HDRI preset: no network fetch, no wait, and for glossy
@@ -149,6 +160,9 @@ export default function Scene({ scrollRef, selected, onSelect }) {
     velPitch: 0,
   });
   const view = useRef({ yaw: 0, pitch: 0 });
+  // Dev-only handle: `__drag.yaw` should never leave (-PI, PI], however many turns the
+  // board has been spun.
+  if (import.meta.env.DEV) window.__drag = drag.current;
   const boardYaw = useRef(0); // total yaw, so the in-plane text can stay readable
   // Set on release when the press travelled far enough to count as a drag; read by the
   // keycap click handler so rotating the board never also selects a key.
@@ -188,11 +202,7 @@ export default function Scene({ scrollRef, selected, onSelect }) {
       g.at = now;
 
       g.yaw += dx * DRAG_SPEED;
-      g.pitch = THREE.MathUtils.clamp(
-        g.pitch + dy * DRAG_SPEED,
-        PITCH_MIN,
-        PITCH_MAX,
-      );
+      g.pitch = clampPitch(g.pitch + dy * DRAG_SPEED);
       // Momentum in radians per second, so a throw is frame-rate independent.
       g.velYaw = (dx * DRAG_SPEED) / dt;
       g.velPitch = (dy * DRAG_SPEED) / dt;
@@ -233,16 +243,31 @@ export default function Scene({ scrollRef, selected, onSelect }) {
     const e = THREE.MathUtils.smoothstep(p, 0, 1);
 
     // The board idles with a slow tumble in the hero and settles as skills takes over.
-    spin.current += d * 0.11 * (1 - e);
+    spin.current = (spin.current + d * 0.11 * (1 - e)) % TWO_PI;
+
+    // Spinning the board several turns one way used to leave the drag yaw at a dozen
+    // radians, and scrolling back up then unwound every one of them on screen. Shifting
+    // the target and its damped value by the same whole turn is visually a no-op, and it
+    // caps the worst case at half a turn.
+    if (g.yaw > Math.PI || g.yaw < -Math.PI) {
+      const turns = Math.round(g.yaw / TWO_PI) * TWO_PI;
+      g.yaw -= turns;
+      view.current.yaw -= turns;
+    }
+
+    // Once the section is behind us, ease the rotation back to the designed pose. It
+    // happens where nothing is visible, so scrolling down again always starts square.
+    if (e < 0.15 && !g.active) {
+      g.yaw = THREE.MathUtils.damp(g.yaw, 0, 3, d);
+      g.pitch = THREE.MathUtils.damp(g.pitch, 0, 3, d);
+      g.velYaw = 0;
+      g.velPitch = 0;
+    }
 
     // Throw: after release the target keeps moving and the velocity decays out.
     if (!g.active) {
       g.yaw += g.velYaw * d;
-      g.pitch = THREE.MathUtils.clamp(
-        g.pitch + g.velPitch * d,
-        PITCH_MIN,
-        PITCH_MAX,
-      );
+      g.pitch = clampPitch(g.pitch + g.velPitch * d);
       const decay = Math.exp(-4 * d);
       g.velYaw *= decay;
       g.velPitch *= decay;
@@ -289,9 +314,9 @@ export default function Scene({ scrollRef, selected, onSelect }) {
     pitchGroup.current.scale.setScalar(
       THREE.MathUtils.lerp(HERO.scale, SKILLS.scale, e),
     );
-    // Scaling the offsets by `e` means scrolling back up unwinds the rotation rather
-    // than stranding the board at whatever angle it was left at.
-    pitchGroup.current.rotation.x = view.current.pitch * e;
+    // Scaling the offsets by `e` means scrolling back up returns the board to its pose
+    // rather than stranding it at whatever angle it was left at.
+    pitchGroup.current.rotation.x = (SKILLS_PITCH + view.current.pitch) * e;
     boardYaw.current = THREE.MathUtils.lerp(
       spin.current,
       SKILLS_YAW + view.current.yaw,

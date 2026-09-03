@@ -51,14 +51,21 @@ you have to set `autoReset = false` and accumulate a frame to get a true number.
 **The 3D text is in the board's group**, not overlaid on the page. That is why it inherits the
 board's rotation and is occluded by the caps, which is what makes it read as part of the object.
 
+**The skills pose is chosen for legibility.** The type lies in the plane, so the plane's angle is
+the type's angle. Yaw is only 0.15 rad — enough that it does not read as a flat screenshot, little
+enough that the heading still reads as a line rather than a diagonal — and the board carries a
+0.22 rad base pitch that tips it toward the camera. The camera sits about 43° above the plane and
+that base adds another 13°, which is most of the difference between a caption you read and one you
+decipher.
+
 **Drag-to-rotate is two nested groups**, pitch on the outer and yaw on the inner. One group with
 an euler triple would gimbal and start rolling the board. Pointer deltas move a target, the
 rendered value damps toward it at lambda 11 so the board lags a few frames behind the cursor, and
 the release velocity is kept in radians per second so a throw decays the same at any frame rate.
-Yaw is free; pitch is clamped, because past about 35° up or 60° down you are looking at the
-underside of the tray and the in-plane text edge-on.
+Yaw is free; pitch is clamped — and since the drag offset now sits on top of a base pitch, it is
+clamped against what that base leaves rather than against zero.
 
-Three things that only matter once it moves:
+Five things that only matter once it moves:
 
 - **A rotate must not select a key.** Both end in a pointerup over some cap. The press records how
   far it travelled, and anything over 6px sets a flag the click handler checks and bails on. The
@@ -69,6 +76,14 @@ Three things that only matter once it moves:
   counter-rotates about the plane's own normal by the *nearest half turn* — so under 90° the
   designed skew is untouched, and past it the type swings around inside the plane rather than
   inverting. It is still in the plane, still occluded by the caps.
+- **Yaw must not accumulate.** Spinning the board a few turns one way left the drag yaw at a dozen
+  radians, and scrolling back up then unwound every one of them on screen. Whenever it leaves
+  (−π, π], the target and its damped value are shifted by the same whole turn — visually a no-op,
+  since the rotation differs by a multiple of 2π — which caps the worst case at half a turn.
+- **The pose resets out of sight.** Below 15% progress the yaw and pitch offsets ease to zero.
+  That happens where nothing is visible, so scrolling down always arrives at the designed pose
+  rather than wherever it was left. The selection is cleared on the same journey — otherwise the
+  hero keeps glowing under a pressed key you can no longer see.
 
 Drag is bound to mouse and pen only. On touch, a vertical swipe is how you scroll the page, and
 capturing it to rotate the board would trap the reader in the section.

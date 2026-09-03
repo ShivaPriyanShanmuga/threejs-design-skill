@@ -144,21 +144,23 @@ export default function Watch({ progressRef }) {
     // Slow enough that you are not sure it is moving: a full turn takes about three minutes.
     spin.current.rotation.y += d * 0.035
 
-    // Scroll turns it to profile. Damped so the object leads and the page follows.
-    const toProfile = THREE.MathUtils.smoothstep(p, 0.15, 0.85)
+    // The watch is the second beat now. It arrives from the right, turned, and settles
+    // face-on as the armour recedes — the page's one idea, told as a movement.
+    const enter = THREE.MathUtils.smoothstep(p, 0.3, 0.68)
     group.current.rotation.y = THREE.MathUtils.damp(
       group.current.rotation.y,
-      THREE.MathUtils.lerp(0.16, -1.15, toProfile),
+      THREE.MathUtils.lerp(0.62, 0.1, enter),
       3,
       d,
     )
     group.current.rotation.x = THREE.MathUtils.damp(
       group.current.rotation.x,
-      THREE.MathUtils.lerp(-0.26, -0.07, toProfile),
+      THREE.MathUtils.lerp(-0.34, -0.2, enter),
       3,
       d,
     )
-    group.current.position.x = THREE.MathUtils.lerp(1.15, 0.35, toProfile)
+    group.current.position.x = THREE.MathUtils.lerp(4.9, 1.15, enter)
+    group.current.position.y = THREE.MathUtils.lerp(-0.35, 0, enter)
 
     // A few degrees of cursor parallax. Nothing more, per the brief.
     const tx = state.pointer.y * 0.07
@@ -171,7 +173,7 @@ export default function Watch({ progressRef }) {
   })
 
   return (
-    <group ref={group} position={[1.15, 0, 0]} scale={0.74} rotation={[-0.26, 0.16, 0]}>
+    <group ref={group} position={[4.9, -0.35, 0]} scale={0.74} rotation={[-0.34, 0.62, 0]}>
       <group ref={spin}>
         {/* dial faces the camera */}
         {/* +PI/2, not -PI/2: -PI/2 maps the dial normal to -Z and shows the caseback. */}

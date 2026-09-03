@@ -9,9 +9,30 @@ npm install
 npm run dev
 ```
 
-![Hero: the watch right of centre, headline stacked against a hard left margin](docs/hero.png)
+![Hero: a samurai in armour, kabuto and kuwagata horns, right of centre](docs/hero.png)
 
-![Second beat: the watch turned, the spec rail in place of the headline](docs/rail.png)
+![Second beat: the armour has receded and the watch arrived, with the spec rail](docs/rail.png)
+
+Two beats, and the page has one idea: **the armour becomes the object.** A samurai bust holds
+the first screen; on scroll it recedes into the dark and the watch arrives from the right and
+settles face-on. The eleven generations in the headline are the transition, not a claim in the
+copy.
+
+## The armour
+
+Kabuto, kuwagata, mempo, dō, sode and kusazuri, built from lathes and open cylinders and read
+almost entirely as silhouette with a rim light on the edges. That is not a dodge around low-poly
+modelling — armour photographed in a dark room looks exactly like this — but it is the reason a
+figure made of primitives holds up. Fully lit, it would read as a game asset.
+
+One shape does most of the work: the **kuwagata**, the two brass horns rising from the brow. The
+first attempt was a near-closed torus as a crescent and it read as a handle on top of the helmet.
+Two horns in a V say "kabuto" instantly, even at this size and this dark. When a form has to be
+recognisable at a glance, find the one silhouette that carries the identity and spend the detail
+there — everything else can stay a shadow.
+
+Brass appears only on the crest. The red accent is spent on the seconds hand and the rule, and a
+third use would have cost the restraint its effect.
 
 ## What the skill did and did not supply
 

@@ -4,6 +4,7 @@ import { EffectComposer, Noise, ToneMapping, Vignette } from '@react-three/postp
 import { BlendFunction, ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import Samurai from './Samurai'
 import Watch from './Watch'
 
 /**
@@ -71,11 +72,13 @@ export default function Scene({ scrollRef }) {
         shadow-normalBias={0.02}
       />
       {/* Cool rim from behind left, to separate steel from a black ground. */}
-      <directionalLight position={[-5, 1.5, -3.5]} intensity={1.1} color="#93a6c8" />
+      <directionalLight position={[-5, 1.5, -3.5]} intensity={1.9} color="#93a6c8" />
       {/* A weak frontal fill, standing in for the reflector a photographer would use: just
           enough to put light in the hands and markers without lifting the dial. */}
       <directionalLight position={[0.6, 0.8, 4.5]} intensity={0.42} color="#cfd6e2" />
 
+      {/* The armour first, then the object it became. */}
+      <Samurai progressRef={progress} />
       <Watch progressRef={progress} />
 
       <EffectComposer>

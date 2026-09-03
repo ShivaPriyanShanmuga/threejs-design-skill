@@ -55,9 +55,26 @@ the one file worth opening.
 | [`references/performance.md`](threejs-design/references/performance.md) | In priority order: measure, cap DPR, cut draw calls, stop rendering when nothing changes, compress assets, degrade adaptively. Plus disposal and a symptom-to-cause table. |
 | [`scripts/scaffold.sh`](threejs-design/scripts/scaffold.sh) | `scaffold.sh <name> <r3f\|vanilla>` — non-interactive Vite setup with a starter scene that already has the defaults baked in. |
 
-The skill covers everything inside the `<canvas>`. Palette, typography, and layout stay with
-Claude's built-in `frontend-design` skill; `SKILL.md` says so explicitly so the two compose
-instead of overlapping.
+## Pairs well with
+
+**A browser automation tool — Playwright above all.** This is the one that matters. A 3D scene has
+no meaningful unit test: a scene can compile clean, throw no warnings, and still be flat, washed
+out, or unreadable. The only check that counts is rendering it and looking. Both demos here were
+built, screenshotted with Playwright, and fixed — and every real defect in them was invisible in
+the source and obvious in the image. Point Claude at a dev server, have it screenshot and *look*,
+and iterate. Chrome DevTools MCP or any equivalent works the same way.
+
+It is also worth having Claude measure rather than assert, in the same pass. Console warnings
+caught two deprecations in Three.js r185 that the skill was recommending; `renderer.info` settled a
+draw-call claim that would otherwise have been a guess.
+
+**`frontend-design` (built-in).** This skill owns everything inside the `<canvas>` — scene, camera,
+lighting, materials, shaders, motion. Palette, typography, layout, and spacing stay with
+`frontend-design`. `SKILL.md` says so explicitly so the two compose instead of fighting over the
+same decisions. Load both whenever the 3D sits inside a real page, which is most of the time.
+
+**`run` (built-in), or whatever launches your app.** Useful for getting the dev server up before
+the screenshot loop starts.
 
 ## The demos
 

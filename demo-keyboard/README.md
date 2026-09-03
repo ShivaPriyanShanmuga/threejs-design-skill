@@ -5,6 +5,9 @@ where one 3D mechanical keyboard persists across both. Scrolling drives it from 
 three-quarter view into a SKILLS view; hovering lifts a cap, clicking presses it down and reveals
 that skill's name and a one-liner as 3D text lying in the board's own plane.
 
+In the skills beat the whole thing is one rigid plane you can grab: hold left mouse and drag to
+turn it on both axes, board, caption, heading and all.
+
 The persona and copy are fictional.
 
 ```bash
@@ -15,6 +18,8 @@ npm run dev
 ![Hero: name on the left, a colourful 3D keyboard floating on the right](docs/hero.png)
 
 ![Skills: the board rotated large, with the pressed GraphQL cap and its caption lying in the board's plane](docs/skills.png)
+
+![The same scene dragged off-axis: keyboard, heading and caption have all rotated together as one plane](docs/rotate.png)
 
 | File | |
 | --- | --- |
@@ -44,7 +49,29 @@ post-processing pass. Without instancing the caps and decals it would be about 7
 you have to set `autoReset = false` and accumulate a frame to get a true number.
 
 **The 3D text is in the board's group**, not overlaid on the page. That is why it inherits the
-board's yaw and is occluded by the caps, which is what makes it read as part of the object.
+board's rotation and is occluded by the caps, which is what makes it read as part of the object.
+
+**Drag-to-rotate is two nested groups**, pitch on the outer and yaw on the inner. One group with
+an euler triple would gimbal and start rolling the board. Pointer deltas move a target, the
+rendered value damps toward it at lambda 11 so the board lags a few frames behind the cursor, and
+the release velocity is kept in radians per second so a throw decays the same at any frame rate.
+Yaw is free; pitch is clamped, because past about 35° up or 60° down you are looking at the
+underside of the tray and the in-plane text edge-on.
+
+Three things that only matter once it moves:
+
+- **A rotate must not select a key.** Both end in a pointerup over some cap. The press records how
+  far it travelled, and anything over 6px sets a flag the click handler checks and bails on. The
+  flag is cleared on the next pointerdown, not on a timer, so it cannot race the click event.
+- **Hover is suppressed mid-drag.** The pointer sweeps across every cap on the way round, and
+  letting hover follow it strobes the glow across the board.
+- **Text has to stay readable.** Rigidly attached, a half turn leaves the caption upside-down. It
+  counter-rotates about the plane's own normal by the *nearest half turn* — so under 90° the
+  designed skew is untouched, and past it the type swings around inside the plane rather than
+  inverting. It is still in the plane, still occluded by the caps.
+
+Drag is bound to mouse and pen only. On touch, a vertical swipe is how you scroll the page, and
+capturing it to rotate the board would trap the reader in the section.
 
 **Scroll is normalised once.** Lenis emits `progress`, `App` writes it to a ref, and the scene
 damps toward it at lambda 4 — the board lagging slightly behind the page is what gives it weight.

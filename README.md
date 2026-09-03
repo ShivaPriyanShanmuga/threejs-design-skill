@@ -69,15 +69,17 @@ looking at the result. Personas and copy are fictional.
 A two-beat portfolio rebuilt from a video reference. One 3D mechanical keyboard persists across
 both beats: scroll drives it from the hero into a SKILLS view, hovering lifts a cap, and clicking
 presses it down and reveals that skill's name plus a one-liner as 3D text lying in the board's own
-plane.
+plane. In the skills beat the whole thing is one rigid plane you can grab and turn on both axes
+with the left mouse button — board, heading and caption together.
 
 ![The skills beat: the board rotated large, a pressed cap, and its caption lying in the board's plane](demo-keyboard/docs/skills.png)
 
 It leans on most of the skill at once — a custom tapered keycap geometry, `InstancedMesh` with a
 runtime-built logo atlas and per-instance UV offsets, raycast interaction on instances, damped
 press animation, RoomEnvironment lighting, scroll-driven camera interpolation via Lenis, in-scene
-troika text, and a restrained post chain. The whole frame costs **25 draw calls**, measured — about
-73 without instancing.
+troika text, and a restrained post chain, plus a damped drag-rotate with momentum that has to
+distinguish a rotate from a click. The whole frame costs **25 draw calls**, measured — about 73
+without instancing.
 
 ### [`demo/`](demo/) — the simpler one
 

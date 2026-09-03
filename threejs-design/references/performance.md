@@ -12,6 +12,11 @@ console.log(renderer.info.render.triangles);
 console.log(renderer.info.memory.geometries, renderer.info.memory.textures);  // leak detector
 ```
 
+`info.render` is reset at the start of every render pass, so with an `EffectComposer` a naive read
+after the frame reports the last pass only — usually a single fullscreen quad, which looks like a
+suspiciously good result. Set `renderer.info.autoReset = false`, reset once, and read after exactly
+one frame to get the whole picture, post included.
+
 Two numbers tell you which problem you have. If frame time scales with window size, you are
 **fill-rate bound** — pixels, post-processing, transparency, DPR. If it does not change when you
 shrink the window, you are **CPU or draw-call bound** — too many objects, too much work per frame.
@@ -52,6 +57,11 @@ losing.
   Per-instance color via `setColorAt`; anything else needs an `InstancedBufferAttribute` and a
   shader. Set `mesh.frustumCulled = false` if instances spread beyond the source geometry's
   bounding box, or they will vanish at screen edges.
+
+  Bake orientation into the geometry, not into the instance matrices. A `PlaneGeometry` faces +Z;
+  instancing it with translation-only matrices leaves every copy standing upright, which is how a
+  set of flat decals ends up as billboards hovering over the surface they were meant to be printed
+  on. `geometry.rotateX(-Math.PI / 2)` once beats rotating 10,000 matrices every frame.
 - **`mergeGeometries`** (`three/addons/utils/BufferGeometryUtils.js`) for many *different* static
   geometries sharing a material. One mesh, one call. The trade-off is you lose per-object
   transforms and per-object frustum culling.
@@ -74,7 +84,21 @@ R3F then renders only when `invalidate()` is called — drei's controls, prop ch
 set by controls and animations. Also pause on `document.hidden` and when the canvas scrolls out of
 view via `IntersectionObserver`; a background tab still burns battery otherwise.
 
-## 4. Compress assets
+## 4. Watch the JavaScript, not just the assets
+
+Three.js plus R3F, drei, and postprocessing is already 300–400 KB gzipped before your own code, so
+a careless import is easy to miss against that baseline.
+
+The one that bites: `import * as pkg from 'big-icon-or-asset-library'` defeats tree-shaking
+entirely and pulls in the whole package — a namespace import of `simple-icons` for 25 logos ships
+all ~3200 of them, turning a 1.3 MB bundle into 6.6 MB. Use named imports so the bundler can drop
+what you do not reference, and check `dist/` after a build rather than trusting it.
+
+Lazy-load the 3D itself when it is below the fold or behind an interaction: a dynamic `import()`
+of the canvas component keeps Three out of the initial bundle entirely, which matters more for
+first paint than anything inside the scene.
+
+## 5. Compress assets
 
 Download size and VRAM are different problems and need different tools.
 
@@ -96,7 +120,7 @@ compresses textures, and applies Draco.
 - **Power-of-two dimensions** so mipmaps generate properly. Blurry, shimmering textures in motion
   usually means mipmapping is off or the texture is NPOT.
 
-## 5. Degrade adaptively
+## 6. Degrade adaptively
 
 Ship one experience that measures the device rather than two experiences behind a guess.
 

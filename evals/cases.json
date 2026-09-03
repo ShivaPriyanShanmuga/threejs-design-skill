@@ -1,0 +1,153 @@
+{
+  "$comment": "Eval cases for the threejs-design skill. Two suites: does it fire when it should, and once fired does it load only what it needs. See README.md.",
+  "trigger": [
+    {
+      "id": "implicit-premium",
+      "prompt": "The landing page hero feels dead. Make it feel more premium and alive.",
+      "expect": "activate",
+      "why": "The whole point of the pushy description: the user never says 3D, but this is the request behind most hero work."
+    },
+    {
+      "id": "implicit-behind-headline",
+      "prompt": "I want something animated sitting behind the headline, subtle, not distracting.",
+      "expect": "activate",
+      "why": "Ambient background archetype, described in plain language."
+    },
+    {
+      "id": "implicit-awwwards",
+      "prompt": "Can you build me a site that looks like an Awwwards winner?",
+      "expect": "activate",
+      "why": "Named explicitly in the description."
+    },
+    {
+      "id": "implicit-immersive",
+      "prompt": "Add some depth and motion to this marketing page so it feels immersive.",
+      "expect": "activate"
+    },
+    {
+      "id": "implicit-product-spin",
+      "prompt": "Our product page needs a 360 spin of the shoe that people can drag.",
+      "expect": "activate",
+      "why": "Product viewer archetype without the words three.js or WebGL."
+    },
+    {
+      "id": "explicit-r3f",
+      "prompt": "Set up react-three-fiber with drei in this Next.js app.",
+      "expect": "activate"
+    },
+    {
+      "id": "explicit-glsl",
+      "prompt": "Write me a GLSL fragment shader for an animated gradient background.",
+      "expect": "activate"
+    },
+    {
+      "id": "explicit-particles",
+      "prompt": "Add a particle system with about 100k points that reacts to the cursor.",
+      "expect": "activate"
+    },
+    {
+      "id": "debug-flat",
+      "prompt": "My 3D scene looks flat. I've added more lights and it got worse.",
+      "expect": "activate",
+      "why": "The single highest-value diagnosis in the skill."
+    },
+    {
+      "id": "debug-washed",
+      "prompt": "Why does my model look washed out and milky?",
+      "expect": "activate"
+    },
+    {
+      "id": "debug-janky",
+      "prompt": "The site is janky and my phone gets hot after about thirty seconds.",
+      "expect": "activate"
+    },
+    {
+      "id": "neg-css-centering",
+      "prompt": "Center this div vertically inside its parent.",
+      "expect": "skip",
+      "why": "Plain CSS. If the skill fires here the description is too greedy."
+    },
+    {
+      "id": "neg-sql",
+      "prompt": "Write a SQL migration adding a nullable email column to users.",
+      "expect": "skip"
+    },
+    {
+      "id": "neg-flexbox",
+      "prompt": "The flexbox layout breaks on mobile, the cards overflow horizontally.",
+      "expect": "skip",
+      "why": "frontend-design territory, explicitly not this skill's scope."
+    },
+    {
+      "id": "neg-chart",
+      "prompt": "Make a chart of monthly revenue for the last two years.",
+      "expect": "skip",
+      "why": "dataviz should win this one."
+    },
+    {
+      "id": "neg-threejs-mention-only",
+      "prompt": "Bump the three.js dependency to the latest version and fix any peer warnings.",
+      "expect": "skip",
+      "why": "Mentions three.js but is dependency housekeeping, not design work. Tests that the trigger is about the task, not the keyword."
+    }
+  ],
+  "routing": [
+    {
+      "id": "route-shader-art",
+      "prompt": "Build a full-screen animated shader background, flowing organic colour, no geometry.",
+      "expectLoaded": ["shaders.md"],
+      "expectNotLoaded": ["r3f.md", "scroll-motion.md"],
+      "why": "Progressive disclosure is the point. A shader task must not drag in R3F patterns."
+    },
+    {
+      "id": "route-vanilla",
+      "prompt": "Add a rotating 3D logo to this plain HTML page. No framework, just a script tag build.",
+      "expectLoaded": ["vanilla.md"],
+      "expectNotLoaded": ["r3f.md"]
+    },
+    {
+      "id": "route-scroll",
+      "prompt": "As the user scrolls, the camera should travel through the scene past three product shots.",
+      "expectLoaded": ["scroll-motion.md"],
+      "expectNotLoaded": ["shaders.md"]
+    },
+    {
+      "id": "route-viewer",
+      "prompt": "A product configurator in React where you can orbit the model and switch materials.",
+      "expectLoaded": ["r3f.md", "materials-lighting.md", "performance.md"],
+      "expectNotLoaded": ["scroll-motion.md"]
+    },
+    {
+      "id": "route-diagnosis",
+      "prompt": "My brushed metal material looks like grey plastic. What's wrong?",
+      "expectLoaded": ["materials-lighting.md"],
+      "expectNotLoaded": ["scroll-motion.md", "shaders.md"],
+      "why": "The diagnosis table should route to exactly one file."
+    },
+    {
+      "id": "route-perf",
+      "prompt": "This scene runs at 20fps on my laptop and melts my phone. Where do I start?",
+      "expectLoaded": ["performance.md"],
+      "expectNotLoaded": ["shaders.md"]
+    }
+  ],
+  "output": [
+    {
+      "$comment": "Asserted against generated code, not against the model's prose. These are the defaults SKILL.md claims decide the look; if the skill works, they should appear without being asked for.",
+      "id": "defaults-in-generated-code",
+      "prompt": "Write a vanilla Three.js + Vite hero scene: dark, one metal object, premium and photographic.",
+      "assert": [
+        { "id": "fov", "test": "camera fov is 50 or lower, not the default 75" },
+        { "id": "environment", "test": "scene.environment is set from RoomEnvironment or an HDRI" },
+        { "id": "dpr", "test": "setPixelRatio is clamped, e.g. Math.min(devicePixelRatio, 2)" },
+        { "id": "tonemapping", "test": "renderer.toneMapping is set to ACESFilmic, AgX, or Neutral" },
+        { "id": "delta", "test": "animation is driven by a delta, not a fixed per-frame increment" },
+        { "id": "damping", "test": "any easing is frame-rate independent (damp / 1 - exp), not a bare lerp constant" },
+        { "id": "colorspace", "test": "no data map is tagged SRGBColorSpace" },
+        { "id": "shadowfrustum", "test": "if shadows are enabled, the shadow camera frustum is tightened to the scene" },
+        { "id": "timer", "test": "uses THREE.Timer, or clamps the delta from Clock" },
+        { "id": "roughness", "test": "metal roughness is above 0, not a mirror-perfect 0" }
+      ]
+    }
+  ]
+}

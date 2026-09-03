@@ -76,6 +76,21 @@ same decisions. Load both whenever the 3D sits inside a real page, which is most
 **`run` (built-in), or whatever launches your app.** Useful for getting the dev server up before
 the screenshot loop starts.
 
+`threejs-design/scripts/audit.mjs` packages the measurement half of that loop: point it at a
+running page and it reports Three.js deprecation warnings, GL-level draw calls per frame, exposure
+and saturation statistics, and shipped JS weight. It is a floor, not a verdict — open the
+screenshot anyway.
+
+## Does it actually work?
+
+[`evals/`](evals/) holds the trigger, routing, and output suites, and the write-up of an A/B run:
+same prompt, two cold sessions, one with the skill and one without. The short version is that on a
+rubric of well-known defaults the two **tied**, the skill's measurable win was removing two
+deprecation warnings the base model did not know about, and the skill-guided render came out
+*worse* than the control because the lighting section pushed toward too much light with nothing
+pulling back. That gap is now fixed. The full result, including both renders, is in
+[`evals/README.md`](evals/README.md).
+
 ## The demos
 
 Both were built by following the skill and then checked by screenshotting them with Playwright and

@@ -87,6 +87,8 @@ before reaching for anything fancier.
 | Washed out, milky, low contrast | `NoToneMapping`, or a color texture left untagged so sRGB values get read as linear |
 | Everything too dark, lights seem broken | Pre-r155 intensity values under r155+ physically correct lighting. Punctual lights need roughly π× more; point and spot lights also decay with distance² now |
 | Plasticky, materials subtly off | A roughness/metalness/normal map tagged `SRGBColorSpace` |
+| Colours pastel or candy-coloured | Over-lighting. Every channel is climbing toward its ceiling, which desaturates long before it looks overexposed — cut intensities, not the colours |
+| A dark palette renders mid-grey | Raw float colours are authored in linear space; sRGB output roughly square-roots them. Pick colours as hex through `Color`, or author far darker |
 | Blocky, aliased shadow edges | Shadow camera frustum far larger than the scene. Tighten it before raising `mapSize` |
 | Banded gradients | 8-bit quantization. Add low-opacity grain or dither in the shader |
 | Janky, stutters, drops frames | Check `renderer.info.render.calls` first, then per-frame allocations in the loop (`performance.md`) |

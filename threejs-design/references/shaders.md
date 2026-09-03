@@ -245,6 +245,12 @@ vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
 // e.g. palette(t, vec3(0.5), vec3(0.5), vec3(1.0, 1.0, 0.5), vec3(0.8, 0.9, 0.3))
 ```
 
+Watch `c`, the frequency. Giving each channel a different frequency makes them fall in and out of
+phase across `t`, which cycles the hue through the entire wheel — you ask for a single indigo
+family and get orange patches where red peaks while blue troughs. Use one shared frequency for all
+three channels and put the colour variation in the phase `d`; per-channel frequencies are for when
+you actually want a rainbow.
+
 **Interpolating between complements passes through grey.** Linear RGB mixing from orange to blue
 crosses a desaturated mud at t = 0.5, and the midpoint is exactly where the eye lands. Either
 route the ramp through an intermediate hue (orange → magenta → blue), or interpolate in a

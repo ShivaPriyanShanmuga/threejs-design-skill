@@ -33,6 +33,18 @@ single most common cause of "it looks plasticky and I cannot say why". Tagging a
 `TextureLoader` do not — that is where the bug lives. Canvas and video textures need the tag set
 manually too.
 
+**Numbers you type are already linear.** `new THREE.Color('#3178c6')` converts sRGB to the linear
+working space for you, so hex behaves the way you expect. Raw floats do not: a value written
+straight into a shader uniform, a palette function, or `setRGB` is linear, and the sRGB output
+transform roughly square-roots it on the way to the screen. Linear 0.08 — which reads as "nearly
+black" if you think in hex — lands near 0.31, a mid grey. Authoring a dark palette by eye in
+linear numbers and then wondering why it renders washed out is the same bug as a mistagged
+texture, just self-inflicted. Either pick colours as hex through `Color`, or expect to author an
+order of magnitude darker than looks right.
+
+`Color.setRGB(r, g, b, THREE.SRGBColorSpace)` takes the values in sRGB and converts, which is
+usually what you meant.
+
 **Tone mapping.** HDR lighting produces values above 1.0. Without tone mapping they clip to flat
 white and the image goes chalky.
 
@@ -125,6 +137,13 @@ looks right, rather than assuming the light is broken.
 If a scene looks dark, check this before adding more lights. Adding lights to compensate for
 wrong units gives you a flat, overlit scene with no shadow structure — worse than where you
 started.
+
+**Too much light reads as desaturation, not as brightness.** This is the failure people misdiagnose
+most often. Push enough light at a saturated surface and every channel climbs toward its ceiling,
+so a brand blue turns powder blue and a brand green turns mint — the image looks *pastel* well
+before it looks *overexposed*, so nothing about it says "turn the lights down". If colours are
+coming out chalky, cut light intensity, `scene.environmentIntensity`, and `envMapIntensity` before
+you touch the colours themselves. Recolouring to compensate just bakes the error in.
 
 **Shadows.** The default shadow camera is a 10-unit box. If your scene is 2 units across, you are
 spending the entire shadow map on empty space:

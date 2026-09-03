@@ -104,9 +104,11 @@ whichever system read it second silently stops moving. And `connect(document)` r
 delta while the tab is hidden: without that, returning to a backgrounded tab hands you the entire
 time away as a single delta and everything integrating it jumps across the screen.
 
-On versions before `Timer` moved into the core namespace, import it from
-`three/addons/misc/Timer.js`. If you are stuck on `Clock`, clamp by hand instead:
-`Math.min(clock.getDelta(), 0.1)`.
+`Timer` lives in the core namespace — `THREE.Timer`, from the same `import * as THREE from 'three'`
+you already have. Do **not** import it from `three/addons/misc/Timer.js`: it was moved out of
+addons, that path no longer resolves on current versions, and the failure is a build error rather
+than a runtime one. If you are on a version old enough that `THREE.Timer` is undefined, stay on
+`Clock` and clamp by hand: `Math.min(clock.getDelta(), 0.1)`.
 
 Allocate nothing inside the loop. `new THREE.Vector3()` per frame is 60 allocations a second
 feeding the garbage collector, which is a large share of "janky but the frame rate looks fine".

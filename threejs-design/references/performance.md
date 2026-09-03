@@ -114,7 +114,10 @@ compresses textures, and applies Draco.
   VRAM — roughly 4–8x less memory, and it uploads faster. This is what fixes "the page loads fine
   then everything stalls".
 - **Draco** shrinks geometry for transfer only; it decompresses to full size in VRAM. Real win on
-  download, none on memory, plus a decoder to load.
+  download, none on memory — and the decoder is a fixed ~250 KB fetch (WASM plus wrapper) that you
+  pay whether the model is 20 MB or 200 KB. Compressing a single small model is a net loss:
+  measured on a 180 KB product model, Draco saved 160 KB and cost 250 KB. Do the subtraction
+  before reaching for it. It pays on large geometry, or on many models sharing one decoder.
 - **Texture size is the usual culprit.** A 4096² normal map on an object that occupies 200px of
   screen is pure waste. 1024² covers most web work; 2048² for a hero close-up.
 - **Power-of-two dimensions** so mipmaps generate properly. Blurry, shimmering textures in motion

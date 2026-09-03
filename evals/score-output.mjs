@@ -11,8 +11,9 @@
  * *made*, not that they were made well. Read the code and render it too.
  */
 
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { basename } from 'node:path'
+import { basename, join } from 'node:path'
 
 const strip = (s) =>
   s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[^:])\/\/.*$/gm, '$1 ')
@@ -125,6 +126,21 @@ const CHECKS = [
     },
   },
 ]
+
+// Resolution check. `node --check` passes a file whose imports do not exist, and so does a
+// regex rubric — an r185 run produced `three/addons/misc/Timer.js`, which was moved into core
+// and no longer resolves, and nothing but a bundler noticed. If a three install is reachable,
+// verify every `three/addons/*` path actually points at a file.
+const THREE_ROOTS = ['node_modules/three', '../node_modules/three', '../../node_modules/three']
+function checkAddonImports(src) {
+  const root = THREE_ROOTS.find((r) => existsSync(join(r, 'package.json')))
+  if (!root) return [null, 'no three install found to resolve against']
+  const specs = [...src.matchAll(/from\s+['"]three\/addons\/([^'"]+)['"]/g)].map((m) => m[1])
+  if (!specs.length) return [null, 'no addons imports']
+  const missing = specs.filter((sp) => !existsSync(join(root, 'examples/jsm', sp)))
+  return [missing.length === 0, missing.length ? `unresolvable: ${missing.join(', ')}` : `${specs.length} addons imports resolve`]
+}
+CHECKS.push({ id: 'imports', label: 'every three/addons import resolves', run: checkAddonImports })
 
 const files = process.argv.slice(2)
 if (!files.length) {

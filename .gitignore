@@ -19,3 +19,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# generated model source (the .glb is committed; regenerate with scripts/make-model.mjs)
+demo-viewer/public/product.glb.bak

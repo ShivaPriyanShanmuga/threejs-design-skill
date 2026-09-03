@@ -62,6 +62,38 @@ brightness**, so cut intensities before touching colours. That paragraph would h
 this. Re-running the A/B against the updated skill is the obvious next step and has not been
 done.
 
+## Re-run against the fixed skill, same day
+
+The counterweight paragraph went into `materials-lighting.md`, and the same prompt was run again
+cold. Two results, one good and one bad.
+
+**It did not build.** The generated file opened with
+`import { Timer } from 'three/addons/misc/Timer.js'`, which does not resolve on r185 — `Timer` was
+moved into the core namespace and that addons path is gone. The skill's own prose had offered it
+as a fallback for "versions before Timer moved into core", and the model reasonably took it. So
+the skill shipped a build error. `vanilla.md` now says plainly to use `THREE.Timer` from the core
+import and never the addons path.
+
+That is the third defect the skill has had found by running its own output, after `Clock` and
+`PCFSoftShadowMap`, and the first one the skill *introduced* rather than inherited.
+
+**The over-lighting fix worked, partly.** Patching only that one import line — nothing else — and
+rendering:
+
+| | control | treatment v1 | treatment v2 |
+| --- | --- | --- | --- |
+| mean luminance | 0.170 | 0.261 | 0.094 |
+| clipped white | 2.2% | 0.7% | 0.04% |
+| Three.js warnings | 2 | 0 | 0 |
+| builds as generated | yes | yes | **no** |
+
+![treatment v2](results/ab-treatment2.png)
+
+The frame is no longer blown out, the subject has a real cast shadow, and the lathe marks in the
+roughness map are visible where v1 had lost them to bloom. But the metal is still brighter than a
+photograph of steel would be, and the control's chrome torus arguably still reads as the most
+convincing product shot of the three. The counterweight helped; it did not finish the job.
+
 ### What this does and does not show
 
 n = 1 prompt, 1 run per condition, same model in both. It cannot distinguish "the skill
@@ -72,7 +104,13 @@ knowledge the model's training predates.**
 
 It also shows a rubric of correctness checks cannot see design quality. The treatment scored
 identically and looked worse. Any future version of this eval needs a rendered comparison,
-not just a code scan.
+not just a code scan — and, on the evidence of v2, a build step, because `score-output.mjs` and
+`node --check` both passed a file that Vite refused to resolve.
+
+Running the skill's own output is the only thing here that has ever found a defect in the skill.
+Three so far, all version-drift: two deprecations it was recommending, and one import path it
+invented from a stale assumption. That is the case for keeping this loop, whatever the A/B says
+about the rest.
 
 ### Routing, incidentally
 

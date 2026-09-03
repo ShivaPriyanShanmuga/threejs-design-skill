@@ -138,8 +138,12 @@ key.shadow.camera.right = 4;
 key.shadow.camera.top = 4;
 key.shadow.camera.bottom = -4;
 key.shadow.normalBias = 0.02;  // fixes acne without the peter-panning that .bias causes
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 ```
+
+`PCFShadowMap` is the default and is what you want. `PCFSoftShadowMap` is deprecated as of
+r185 — set it and three warns, then silently uses `PCFShadowMap` anyway. `VSMShadowMap` is
+genuinely softer but bleeds light through thin geometry, so reach for it deliberately or not at
+all. For soft shadows, the answer is not the shadow map type.
 
 Tighten the frustum before raising `mapSize` — it is free, and it usually is the problem.
 `new THREE.CameraHelper(key.shadow.camera)` draws the box so you can see the waste. For a static

@@ -10,9 +10,9 @@ as plastic, tone mapping is off, and every animation is a raw `lerp` that runs a
 on a 120 Hz display. This skill encodes those decisions and roughly forty more, with the reasoning
 attached so Claude can depart from them when the concept calls for it.
 
-![The demo hero: a slow, dark displaced sphere sitting behind large light type](demo/docs/screenshot.png)
+![A dark portfolio hero: large name on the left, a colourful 3D mechanical keyboard floating on the right](demo-keyboard/docs/hero.png)
 
-*Built by following the skill, in [`demo/`](demo/). Details below.*
+*Built by following the skill, in [`demo-keyboard/`](demo-keyboard/). Two demos, details below.*
 
 ## Install
 
@@ -59,46 +59,56 @@ The skill covers everything inside the `<canvas>`. Palette, typography, and layo
 Claude's built-in `frontend-design` skill; `SKILL.md` says so explicitly so the two compose
 instead of overlapping.
 
-## The demo
+## The demos
 
-[`demo/`](demo/) is a placeholder portfolio hero, built by following the skill, and used to test
-it. A slow displaced sphere sits behind the name, responds to the mouse, and stays out of the
-type's way.
+Both were built by following the skill and then checked by screenshotting them with Playwright and
+looking at the result. Personas and copy are fictional.
+
+### [`demo-keyboard/`](demo-keyboard/) — the harder one
+
+A two-beat portfolio rebuilt from a video reference. One 3D mechanical keyboard persists across
+both beats: scroll drives it from the hero into a SKILLS view, hovering lifts a cap, and clicking
+presses it down and reveals that skill's name plus a one-liner as 3D text lying in the board's own
+plane.
+
+![The skills beat: the board rotated large, a pressed cap, and its caption lying in the board's plane](demo-keyboard/docs/skills.png)
+
+It leans on most of the skill at once — a custom tapered keycap geometry, `InstancedMesh` with a
+runtime-built logo atlas and per-instance UV offsets, raycast interaction on instances, damped
+press animation, RoomEnvironment lighting, scroll-driven camera interpolation via Lenis, in-scene
+troika text, and a restrained post chain. The whole frame costs **25 draw calls**, measured — about
+73 without instancing.
+
+### [`demo/`](demo/) — the simpler one
+
+A single hero: a slow displaced sphere behind the name that reacts to the mouse and stays out of
+the type's way.
+
+![A slow, dark displaced sphere sitting behind large light type](demo/docs/screenshot.png)
+
+Its shader is fbm with one level of domain warping, normals recomputed from the displaced surface,
+a fresnel rim, an Inigo Quilez cosine palette, and a dither. Post is bloom at `luminanceThreshold`
+0.9 so only the rim glows, a vignette, and 3% grain.
 
 ```bash
-cd demo && npm install && npm run dev
+cd demo-keyboard && npm install && npm run dev   # or: cd demo
 ```
 
-What it exercises:
+### What testing them changed
 
-- **`fov: 35`**, `dpr={[1, 2]}`, and every animation rate multiplied by delta.
-- **A custom `ShaderMaterial`** — gradient-noise fbm with one level of domain warping, normals
-  recomputed from the displaced surface, and a fresnel rim.
-- **An Inigo Quilez cosine palette** in a single indigo family, plus a dither to kill banding.
-- **Post at low doses**: bloom at `luminanceThreshold` 0.9 so only the fresnel rim glows, a
-  vignette, and 3% grain, with tone mapping moved into the effect chain.
-- **A damped, low-amplitude mouse response** at lambda 1.6, so the form drifts toward the cursor
-  over about a second instead of tracking it.
-- **`prefers-reduced-motion`**, which freezes the drift and the parallax while keeping the scene.
+Building the demos was the point — several defects only showed up once there was something to look
+at, and two of them were corrections to the skill itself:
 
-It was checked by screenshotting it with Playwright and looking at the result. Two things that
-only showed up that way:
+- **`THREE.Clock` is deprecated as of r185.** The vanilla reference and the scaffold now use
+  `THREE.Timer` with `connect(document)`.
+- **`PCFSoftShadowMap` is deprecated as of r185** — three warns and silently falls back to
+  `PCFShadowMap`. `materials-lighting.md` no longer recommends it.
 
-- The first pass rendered a bright saturated blue ball that fought the headline. The palette was
-  authored in **linear** space, where a value of 0.08 looks dark — but sRGB output roughly
-  square-roots it to 0.31 on screen. The fix was authoring an order of magnitude darker.
-- Orange patches were appearing in what was meant to be a single indigo family, because the cosine
-  palette's per-channel frequencies were cycling the hue. One shared frequency, with the colour
-  work moved into the phase offsets, fixed it.
-
-The mouse response was verified rather than assumed: two loads at a matched animation phase with
-the pointer on opposite sides differ by a mean channel delta of 2.94, against a 0.25 run-to-run
-timing-noise floor — present, and subtle.
-
-Testing the skill also turned up a real correction to it: `THREE.Clock` is deprecated as of r185,
-so the vanilla reference and the scaffold now use `THREE.Timer` with `connect(document)`.
-
-The copy and the persona in the demo are placeholders. Swap them.
+And in the demos themselves: a palette authored in linear space that rendered far too bright, a
+cosine palette whose per-channel frequencies cycled the hue into orange, 25 logo decals left
+standing upright because a `PlaneGeometry` faces +Z, brand colours washed to pastel by
+over-lighting, and a 6.6 MB bundle from a namespace import that defeated tree-shaking. Each demo's
+README has the details.
 
 ## License
 

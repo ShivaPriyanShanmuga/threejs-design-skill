@@ -41,8 +41,13 @@ export default function Orb({ reducedMotion = false }) {
   useFrame((state, delta) => {
     const d = Math.min(delta, 0.1) // a backgrounded tab returns a huge delta
 
+    // Mutate the MATERIAL's uniforms, not the object handed to the JSX prop. R3F does
+    // not preserve that object's identity, so writing to it advances nothing and the
+    // shader sits frozen at its initial values — which is exactly what happened here.
+    const u = mesh.current.material.uniforms
+
     if (!reducedMotion) {
-      uniforms.uTime.value += d
+      u.uTime.value += d
       // ~140s for a full revolution. Slow enough to read as weight, not as a loop.
       group.current.rotation.y += d * 0.045
       group.current.rotation.x += d * 0.012

@@ -79,12 +79,44 @@ const geo = new THREE.SphereGeometry(1, 64, 64);
 // Right: memoise anything constructed imperatively
 const geo = useMemo(() => new THREE.SphereGeometry(1, 64, 64), []);
 const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
-useFrame((_, d) => { uniforms.uTime.value += d; });   // mutate .value, never replace the object
+useFrame((_, d) => { ref.current.material.uniforms.uTime.value += d; });  // see below
 ```
 
 Declarative primitives (`<sphereGeometry args={[1, 64, 64]} />`) are already memoised by R3F on
 their `args` array, so prefer them. Reach for `useMemo` when you have to build something
 imperatively.
+
+**Animate uniforms through the material, not through the object you passed in.** This one is
+nasty because it fails silently and looks like it works:
+
+```jsx
+const uniforms = useMemo(() => ({ uTime: { value: 0 } }), []);
+// WRONG: R3F does not keep this object's identity
+useFrame((_, d) => { uniforms.uTime.value += d; });
+return <mesh ref={ref}><shaderMaterial uniforms={uniforms} /></mesh>;
+```
+
+Passing `uniforms` to the JSX prop does not guarantee `material.uniforms` *is* that object — in
+R3F v9 it is not, and `material.uniforms === uniforms` returns false. Every write lands on an
+orphan, the shader keeps its initial values forever, and nothing errors. A scene animated by
+`uTime` simply sits frozen, which is easy to miss when the mesh is also rotating: the object
+moves, so the page looks alive while the shader has not advanced a frame.
+
+Two fixes. Read the uniforms back off the material, which cannot go stale:
+
+```jsx
+useFrame((_, d) => { ref.current.material.uniforms.uTime.value += d; });
+```
+
+Or build the material imperatively and hand it over by reference, which does preserve identity:
+
+```jsx
+const material = useMemo(() => new THREE.ShaderMaterial({ vertexShader, fragmentShader, uniforms }), []);
+return <points geometry={geometry} material={material} />;
+```
+
+To check which you have, log `mesh.current.material.uniforms === uniforms` once. If it is false and
+you are mutating the local object, your shader is frozen.
 
 ## drei, in rough order of usefulness
 

@@ -114,6 +114,23 @@ troika text, and a restrained post chain, plus a damped drag-rotate with momentu
 distinguish a rotate from a click. The whole frame costs **25 draw calls**, measured — about 73
 without instancing.
 
+### [`demo-scarab/`](demo-scarab/) — the hardest one
+
+A recreation of a studio site from a video reference: three scroll beats on one canvas — a
+black-chrome form under a split display serif, a purple volumetric bloom carrying the manifesto,
+then a dark crystal with white arcs.
+
+![Hero: BORN OF NATURE split around a dark bladed form](demo-scarab/docs/hero.png)
+
+![The manifesto over a purple volumetric bloom](demo-scarab/docs/burst.png)
+
+The canvas sits *above* the headline here, so the object passes in front of the words and hides
+"OF N" — that overlap is most of why the frame reads as one image rather than text over a video.
+The form is ridged-noise displacement (`1 - |fbm|`, raised to a power) shaded almost entirely by a
+fresnel rim, and the bloom is a fragment shader on a single quad.
+
+It also found the worst bug in the repo. See below.
+
 ### [`demo-viewer/`](demo-viewer/) — the coverage one
 
 A product viewer, built to cover what the other two never touched: the glTF asset pipeline and the
@@ -153,6 +170,13 @@ at, and two of them were corrections to the skill itself:
   `THREE.Timer` with `connect(document)`.
 - **`PCFSoftShadowMap` is deprecated as of r185** — three warns and silently falls back to
   `PCFShadowMap`. `materials-lighting.md` no longer recommends it.
+- **R3F does not preserve the identity of a `uniforms` object passed to a JSX prop.** Mutating
+  your own `useMemo`'d object writes to an orphan: nothing errors, nothing warns, and the shader
+  sits frozen at its initial values forever. This was live in `demo/` from the first commit —
+  `uTime` had never advanced and the fbm displacement was frozen the whole time, which was
+  invisible because the mesh was rotating underneath it. `r3f.md` now carries the trap, both
+  fixes, and the one-line check. **A frozen shader on a moving object looks alive**, which is why
+  three rounds of screenshots missed it.
 - **`three/addons/misc/Timer.js` no longer resolves** — `Timer` moved into the core namespace, and
   the skill was still offering the addons path as a fallback. It shipped a build error in an eval
   run. `vanilla.md` now says to use `THREE.Timer` and never that path. This is the only defect so

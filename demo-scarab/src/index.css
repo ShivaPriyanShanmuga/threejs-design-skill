@@ -1,0 +1,177 @@
+:root {
+  --ink: #f2f0f6;
+  --muted: rgba(242, 240, 246, 0.52);
+  --line: rgba(242, 240, 246, 0.16);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { background: #000; scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+
+body {
+  background: transparent;
+  color: var(--ink);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+canvas { display: block; }
+
+.page { position: relative; }
+.spacer { height: 100svh; }
+
+/* --- layering ------------------------------------------------------------
+   type (1) sits under the canvas (2) so the object occludes the headline.
+   Everything that must stay readable lives in ui (3).                      */
+.type, .canvas-layer, .scrim, .ui { position: fixed; inset: 0; }
+.type { z-index: 1; }
+.canvas-layer { z-index: 2; }
+.scrim { z-index: 3; background: #05040a; opacity: 0; pointer-events: none; }
+.ui { z-index: 4; pointer-events: none; }
+.ui a { pointer-events: auto; }
+
+.beat {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.12s linear;
+}
+
+/* --- display type -------------------------------------------------------- */
+.display {
+  position: absolute;
+  font-family: 'Bodoni Moda', 'Didot', 'Times New Roman', serif;
+  font-weight: 400;
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.display sup { font-size: 0.42em; vertical-align: super; }
+
+.display--a { left: 4.5vw;  top: 33%;  font-size: clamp(3.5rem, 13vw, 12rem); }
+.display--b { right: 3.5vw; top: 52%;  font-size: clamp(3.5rem, 13vw, 12rem); }
+
+.display--c { left: 8vw;  top: 13%; font-size: clamp(2.4rem, 8.6vw, 7.6rem); }
+.display--d { left: 4vw;  top: 36%; font-size: clamp(2.6rem, 9.6vw, 8.6rem); }
+.display--e { left: 26vw; top: 58%; font-size: clamp(2.6rem, 9.6vw, 8.6rem); }
+
+/* --- chrome -------------------------------------------------------------- */
+.nav {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 1.6rem clamp(1.2rem, 3.5vw, 3rem);
+}
+.nav__group { display: flex; gap: clamp(1.4rem, 4vw, 4rem); }
+.nav a, .nav__cta, .label, .get, .micro, .foot__cta, .foot__brand {
+  font-size: 0.63rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-decoration: none;
+}
+.nav a sup { font-size: 0.7em; opacity: 0.7; }
+.nav a:hover, .nav__cta:hover { color: var(--ink); }
+.nav__cta { display: inline-flex; align-items: center; gap: 0.5rem; }
+.arrow { font-size: 0.85em; }
+
+.label { position: absolute; line-height: 1.55; color: var(--ink); }
+.label--right { top: 36%; right: clamp(1.2rem, 3.5vw, 3rem); text-align: right; }
+.label--left  { bottom: 22%; left: clamp(1.2rem, 3.5vw, 3rem); }
+
+.get {
+  position: absolute;
+  bottom: 8%;
+  left: clamp(1.2rem, 3.5vw, 3rem);
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.micro {
+  position: absolute;
+  right: clamp(1.2rem, 3.5vw, 3rem);
+  bottom: 8%;
+  max-width: 22rem;
+  font-size: 0.58rem;
+  line-height: 1.7;
+  letter-spacing: 0.1em;
+  text-align: right;
+  color: rgba(242, 240, 246, 0.36);
+}
+
+/* --- manifesto ----------------------------------------------------------- */
+.beat--manifesto { display: grid; place-items: center; }
+.manifesto {
+  max-width: 46rem;
+  padding: 0 1.5rem;
+  font-family: 'Bodoni Moda', 'Didot', serif;
+  font-size: clamp(1rem, 2.05vw, 1.9rem);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.055em;
+  text-align: center;
+  text-transform: uppercase;
+  color: rgba(255, 252, 255, 0.94);
+  text-shadow: 0 0 26px rgba(30, 6, 48, 0.75);
+}
+.pills {
+  position: absolute;
+  bottom: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 0.6rem;
+}
+.pill {
+  width: 2.5rem; height: 2.5rem;
+  display: grid; place-items: center;
+  border: 1px solid rgba(255,255,255,0.34);
+  border-radius: 50%;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.85);
+  backdrop-filter: blur(3px);
+}
+
+/* --- footer -------------------------------------------------------------- */
+.foot {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 2rem clamp(1.2rem, 3.5vw, 3rem);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.foot .micro { position: static; text-align: left; max-width: 18rem; }
+.foot__brand { display: inline-flex; align-items: flex-end; gap: 0.8rem; line-height: 1.5; color: var(--ink); }
+.foot__logo {
+  width: 2.6rem; height: 3.2rem;
+  border-radius: 7px;
+  background: linear-gradient(160deg, #fdfbff 0%, #cfc4e8 45%, #8f7fb8 100%);
+}
+.foot__cta {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+}
+.foot__cta:hover { border-color: rgba(242,240,246,0.4); }
+
+@media (max-width: 720px) {
+  .micro, .label--right { display: none; }
+  .foot { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .display--b { right: auto; left: 4.5vw; top: 55%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beat, .foot { transition: none; }
+}

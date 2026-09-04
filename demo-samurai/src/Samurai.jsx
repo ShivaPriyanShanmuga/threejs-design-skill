@@ -1,202 +1,145 @@
 import { useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
+import { makeKabutoTexture } from './kabuto'
 
 /**
- * A samurai in armour, as a bust — kabuto, mempo, dō and sode, cropped by the frame.
+ * The kabuto: a flat mark on a quad, shaded so it reads as an object rather than a sticker.
  *
- * Built from primitives, and deliberately read almost entirely as silhouette with a rim
- * light catching the edges. That is not a dodge: armour photographed in a dark room looks
- * exactly like this, and it means the piece survives being made of lathes and boxes. A
- * fully lit low-poly figure would look like a game asset. This one looks like a photograph
- * of something in a vitrine.
+ * Everything dimensional here is faked from the alpha channel. Offsetting the mask against
+ * itself and taking the difference gives a lit edge on one side and a dark one opposite,
+ * which is the whole illusion — the eye reads a rim highlight as form. A wider tap adds
+ * falloff into the interior, a gradient adds depth, and the parallax comes from moving the
+ * quad rather than from any geometry.
  *
- * Lacquered iron everywhere, brass on the maedate crest alone. No red: the accent is spent
- * on the seconds hand and the rule, and a third use would cost the restraint its effect.
+ * `raycast` is disabled: the brief says the figure is not interactive, and a silent pointer
+ * target sitting behind the copy is exactly the thing that eats clicks later.
  */
-
-// Helmet bowl, in cross-section: radius against height, apex first.
-const HACHI = [
-  [0.02, 0.66],
-  [0.13, 0.645],
-  [0.27, 0.60],
-  [0.40, 0.505],
-  [0.495, 0.375],
-  [0.545, 0.225],
-  [0.565, 0.09],
-  [0.565, 0.05],
-]
-
 export default function Samurai({ progressRef }) {
-  const group = useRef()
-  const sway = useRef()
+  const mesh = useRef()
+  const viewport = useThree((s) => s.viewport)
+  const { texture, aspect } = useMemo(() => makeKabutoTexture(), [])
 
-  const hachiGeo = useMemo(() => {
-    const g = new THREE.LatheGeometry(
-      HACHI.map(([x, y]) => new THREE.Vector2(x, y)),
-      96,
-    )
-    g.computeVertexNormals()
-    return g
-  }, [])
+  const uniforms = useMemo(
+    () => ({
+      uMap: { value: texture },
+      uOpacity: { value: 0 },
+      uFill: { value: new THREE.Color('#1d1d26') },
+      uRim: { value: new THREE.Color('#8f9099') },
+      uEdge: { value: new THREE.Color('#050507') },
+      uTime: { value: 0 },
+      uSlash: { value: 0 },
+      uResolution: { value: new THREE.Vector2(1, 1) },
+    }),
+    [texture],
+  )
 
-  // Lacquered iron. Dark enough that the form is carried by the rim, metallic enough that
-  // the rim is a hard line rather than a soft glow.
-  const iron = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#1b1b23',
-        metalness: 0.7,
-        roughness: 0.44,
-        transparent: true,
-      }),
-    [],
-  )
-  const ironMatte = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#141419',
-        metalness: 0.42,
-        roughness: 0.66,
-        transparent: true,
-      }),
-    [],
-  )
-  const brass = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#b08d57',
-        metalness: 1,
-        roughness: 0.28,
-        transparent: true,
-      }),
-    [],
-  )
-  const materials = useMemo(() => [iron, ironMatte, brass], [iron, ironMatte, brass])
-
-  // Lamellar rows. Real armour is hundreds of small plates laced together; at this distance
-  // what reads is the stack of horizontal bands, so that is what gets built.
-  const shikoro = useMemo(
-    () =>
-      [0, 1, 2, 3].map((i) => ({
-        y: 0.045 - i * 0.085,
-        rTop: 0.575 + i * 0.075,
-        rBot: 0.65 + i * 0.085,
-        h: 0.075,
-      })),
-    [],
-  )
-  const kusazuri = useMemo(
-    () =>
-      [0, 1, 2, 3, 4].map((i) => ({
-        y: -0.5 - i * 0.145,
-        rTop: 0.58 + i * 0.032,
-        rBot: 0.61 + i * 0.035,
-        h: 0.125,
-      })),
-    [],
-  )
+  const height = viewport.height * 0.86
+  const width = height * aspect
 
   useFrame((state, delta) => {
     const d = Math.min(delta, 0.1)
     const p = progressRef.current
+    const u = mesh.current.material.uniforms
 
-    // Hands the stage to the watch. Recedes rather than sliding away — the story is that
-    // the armour becomes the object, so it should retreat, not exit.
-    const out = THREE.MathUtils.smoothstep(p, 0.24, 0.52)
-    const o = 1 - out
-    for (const m of materials) m.opacity = o
-    group.current.visible = o > 0.01
-    group.current.position.z = THREE.MathUtils.lerp(0, -2.2, out)
-    group.current.position.x = THREE.MathUtils.lerp(1.2, 0.6, out)
-    group.current.scale.setScalar(THREE.MathUtils.lerp(0.62, 0.5, out))
+    u.uTime.value += d
 
-    // Barely alive. A slow breath, and a few degrees toward the cursor.
-    const t = state.clock.elapsedTime
-    sway.current.rotation.y = THREE.MathUtils.damp(
-      sway.current.rotation.y,
-      -0.42 + Math.sin(t * 0.09) * 0.05 + state.pointer.x * 0.07,
-      1.6,
+    // Present from the first frame — a fade-in ramp starting above zero means the hero
+    // is empty when the page loads, which is exactly when it matters most.
+    const out = THREE.MathUtils.smoothstep(p, 0.32, 0.58)
+    u.uOpacity.value = 1 - out
+    // The cut runs through it before it leaves.
+    u.uSlash.value = THREE.MathUtils.smoothstep(p, 0.24, 0.46)
+    // Screen size, so the cut can be computed in screen space and land exactly on the
+    // DOM hairline. In UV space the two were at different angles and read as two events.
+    u.uResolution.value.set(state.size.width, state.size.height)
+    mesh.current.visible = u.uOpacity.value > 0.005
+
+    // Parallax only. A few percent, damped: depth, not a toy.
+    mesh.current.position.x = THREE.MathUtils.damp(
+      mesh.current.position.x,
+      0.5 + state.pointer.x * 0.12,
+      2,
       d,
     )
-    sway.current.position.y = Math.sin(t * 0.16) * 0.012
+    mesh.current.position.y = THREE.MathUtils.damp(
+      mesh.current.position.y,
+      -0.05 + state.pointer.y * 0.08 - p * 0.3,
+      2,
+      d,
+    )
   })
 
-  const plate = ({ y, rTop, rBot, h }, i, mat) => (
-    <mesh key={i} position={[0, y, 0]} material={mat}>
-      <cylinderGeometry args={[rTop, rBot, h, 64, 1, true]} />
-    </mesh>
-  )
-
   return (
-    <group ref={group} position={[1.2, -0.12, 0]} scale={0.62}>
-      <group ref={sway}>
-        {/* kabuto — the bowl */}
-        <mesh geometry={hachiGeo} material={iron} position={[0, 0.62, 0]} />
+    <mesh ref={mesh} position={[0.5, -0.05, -1.4]} raycast={() => null} renderOrder={-1}>
+      <planeGeometry args={[width, height]} />
+      <shaderMaterial
+        transparent
+        depthWrite={false}
+        uniforms={uniforms}
+        vertexShader={`
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `}
+        fragmentShader={`
+          uniform sampler2D uMap;
+          uniform float uOpacity;
+          uniform float uTime;
+          uniform float uSlash;
+          uniform vec2 uResolution;
+          uniform vec3 uFill;
+          uniform vec3 uRim;
+          uniform vec3 uEdge;
+          varying vec2 vUv;
 
-        {/* tehen: the small opening at the crown */}
-        <mesh position={[0, 1.275, 0]} material={brass}>
-          <cylinderGeometry args={[0.055, 0.07, 0.045, 24]} />
-        </mesh>
+          float mask(vec2 uv) { return texture2D(uMap, uv).a; }
 
-        {/* shikoro — the flared neck guard, four laced rows */}
-        <group position={[0, 0.62, 0]}>{shikoro.map((s, i) => plate(s, i, iron))}</group>
+          void main() {
+            float m = mask(vUv);
+            if (m < 0.004) discard;
 
-        {/* fukigaeshi — the two plates swept back at the temples */}
-        {[1, -1].map((s) => (
-          <mesh
-            key={s}
-            position={[s * 0.6, 0.66, 0.16]}
-            rotation={[0.12, s * -0.5, s * 0.22]}
-            material={iron}
-          >
-            <boxGeometry args={[0.3, 0.26, 0.03]} />
-          </mesh>
-        ))}
+            // Offset the mask against itself: the difference is a lit edge on the side the
+            // light comes from and a dark one opposite. This is the entire illusion.
+            vec2 L = vec2(-0.0040, 0.0050);
+            float lit = clamp(m - mask(vUv - L), 0.0, 1.0);
+            float shade = clamp(m - mask(vUv + L), 0.0, 1.0);
 
-        {/* kuwagata — the two horns rising from the brow, and the only brass on the
-            figure. This is the shape that reads as "kabuto" instantly; a closed arc reads
-            as a handle. */}
-        <group position={[0, 0.98, 0.42]} rotation={[-0.22, 0, 0]}>
-          {[1, -1].map((s) => (
-            <mesh key={s} position={[s * 0.14, 0.24, 0]} rotation={[0, 0, s * -0.42]} material={brass}>
-              <cylinderGeometry args={[0.012, 0.045, 0.56, 16]} />
-            </mesh>
-          ))}
-          {/* the small central plate the horns mount to */}
-          <mesh position={[0, 0.02, 0]} material={brass}>
-            <cylinderGeometry args={[0.075, 0.09, 0.05, 24]} />
-          </mesh>
-        </group>
+            // Wider taps for a soft falloff inward, so the middle is not flat.
+            float soft = 0.0;
+            soft += mask(vUv + vec2( 0.013, 0.0));
+            soft += mask(vUv + vec2(-0.013, 0.0));
+            soft += mask(vUv + vec2( 0.0,  0.016));
+            soft += mask(vUv + vec2( 0.0, -0.016));
+            soft *= 0.25;
 
-        {/* mempo — the face mask, set back under the brow so the face stays a shadow */}
-        <mesh position={[0, 0.52, 0.2]} scale={[0.9, 1, 0.75]} material={ironMatte}>
-          <sphereGeometry args={[0.33, 40, 28]} />
-        </mesh>
+            vec3 col = mix(uEdge, uFill, soft);
+            col = mix(col, uFill * 1.7, smoothstep(0.2, 0.95, vUv.y) * 0.55);
+            col += uRim * lit * 2.6;
+            col -= vec3(0.015) * shade * 2.0;
 
-        {/* dō — the chest, five lamellar rows narrowing to the waist */}
-        <group position={[0, 0, 0]}>
-          {[0, 1, 2, 3, 4].map((i) => (
-            <mesh key={i} position={[0, 0.12 - i * 0.15, 0]} material={iron}>
-              <cylinderGeometry args={[0.66 - i * 0.02, 0.64 - i * 0.025, 0.14, 56, 1, true]} />
-            </mesh>
-          ))}
-        </group>
+            // The cut, in SCREEN space so it coincides with the DOM hairline exactly:
+            // same angle (-38deg), same centre. Computed from vUv it sat on a different
+            // diagonal and the page read as two unrelated strokes.
+            vec2 fc = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);
+            vec2 centre = vec2(uResolution.x * 0.5, uResolution.y * 0.46);
+            float dist = dot(fc - centre, vec2(0.616, 0.788));   // normal of a -38deg line
+            float core = 1.0 - smoothstep(0.0, 22.0, abs(dist));
+            float halo = 1.0 - smoothstep(0.0, 120.0, abs(dist));
+            float strike = sin(clamp(uSlash, 0.0, 1.0) * 3.14159);
+            col += vec3(1.0, 0.94, 0.9) * (core * 2.2 + halo * 0.35) * strike;
 
-        {/* kusazuri — the skirt plates, flaring out below the waist */}
-        {kusazuri.map((s, i) => plate(s, i, ironMatte))}
+            float a = m * uOpacity * (1.0 - core * 0.75 * strike);
 
-        {/* sode — shoulder plates, three tiers each side */}
-        {[1, -1].map((s) => (
-          <group key={s} position={[s * 0.72, 0.06, 0]} rotation={[0, 0, s * -0.16]}>
-            {[0, 1, 2].map((i) => (
-              <mesh key={i} position={[0, -i * 0.15, 0]} rotation={[0.06, 0, 0]} material={iron}>
-                <boxGeometry args={[0.42, 0.13, 0.5 + i * 0.03]} />
-              </mesh>
-            ))}
-          </group>
-        ))}
-      </group>
-    </group>
+            float dither = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
+            col += dither;
+
+            gl_FragColor = vec4(col, a);
+          }
+        `}
+      />
+    </mesh>
   )
 }

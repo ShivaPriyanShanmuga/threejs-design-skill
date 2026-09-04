@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import * as THREE from 'three'
 import Lenis from 'lenis'
@@ -12,7 +12,9 @@ const ease = (t) => t * t * (3 - 2 * t)
 export default function App() {
   const scrollRef = useRef(0)
   const lede = useRef()
-  const rail = useRef()
+  const slash = useRef()
+  const reveal = useRef()
+  const [qty, setQty] = useState(1)
 
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -22,23 +24,37 @@ export default function App() {
       raf = requestAnimationFrame(loop)
     })
 
-    // Normalised once. The scene damps toward it; the DOM reads it directly, written straight
-    // to the elements so a wheel tick never re-renders the tree.
     const apply = (p) => {
       scrollRef.current = p
-      const a = 1 - ease(ramp(p, 0.12, 0.42))
-      const b = ease(ramp(p, 0.48, 0.78))
+
+      // 1. the headline gives way
+      const a = 1 - ease(ramp(p, 0.1, 0.38))
       if (lede.current) {
         lede.current.style.opacity = a
         lede.current.style.transform = `translateY(calc(-50% + ${(1 - a) * -1.4}rem))`
         lede.current.style.visibility = a > 0.01 ? 'visible' : 'hidden'
       }
-      if (rail.current) {
-        rail.current.style.opacity = b
-        rail.current.style.transform = `translateY(${(1 - b) * 1.4}rem)`
-        rail.current.style.visibility = b > 0.01 ? 'visible' : 'hidden'
+
+      // 2. the cut itself: a bright line that arrives, holds, and is gone once the wound
+      //    starts opening. It only exists during the strike.
+      const s = ramp(p, 0.24, 0.46)
+      if (slash.current) {
+        const bright = Math.sin(clamp01(s) * Math.PI)
+        slash.current.style.opacity = bright
+        slash.current.style.transform = `translate(-50%, -50%) rotate(-38deg) scaleX(${0.2 + s * 0.9})`
+      }
+
+      // 3. the wound opens. A band centred on the same diagonal, widening until it has
+      //    taken the screen. Content inside is revealed by the clip, not faded in.
+      const w = ease(ramp(p, 0.44, 0.82))
+      if (reveal.current) {
+        const h = w * 130
+        reveal.current.style.clipPath = `polygon(0% ${100 - h}%, 100% ${-h}%, 100% ${h}%, 0% ${100 + h}%)`
+        reveal.current.style.visibility = w > 0.005 ? 'visible' : 'hidden'
+        reveal.current.style.pointerEvents = w > 0.6 ? 'auto' : 'none'
       }
     }
+
     lenis.on('scroll', ({ progress }) => apply(progress || 0))
     apply(0)
 
@@ -56,7 +72,7 @@ export default function App() {
           dpr={[1, 2]}
           gl={{ antialias: true, powerPreference: 'high-performance' }}
           shadows
-          flat /* tone mapping lives in the effect chain */
+          flat
           onCreated={({ gl }) => gl.setClearColor(new THREE.Color('#0a0a0b'), 1)}
         >
           <Suspense fallback={null}>
@@ -64,6 +80,9 @@ export default function App() {
           </Suspense>
         </Canvas>
       </div>
+
+      {/* the blade's own light, in the DOM so it stays a hard hairline at any DPR */}
+      <div className="slash" ref={slash} aria-hidden="true" />
 
       <div className="ui">
         <header className="bar">
@@ -92,15 +111,21 @@ export default function App() {
           </a>
         </div>
 
-        <div className="rail" ref={rail}>
-          <dl>
+        <footer className="foot">
+          <span className="meta">Made to order · 24 pieces a year</span>
+        </footer>
+      </div>
+
+      {/* revealed through the cut */}
+      <div className="reveal" ref={reveal}>
+        <div className="reveal__panel">
+          <p className="reveal__eyebrow">Calibre K-11 · No. 07 of 24</p>
+          <p className="reveal__price">¥ 1,480,000</p>
+
+          <dl className="reveal__specs">
             <div>
               <dt>Case</dt>
               <dd>39mm · Grade 5 titanium</dd>
-            </div>
-            <div>
-              <dt>Movement</dt>
-              <dd>In-house cal. K-11</dd>
             </div>
             <div>
               <dt>Reserve</dt>
@@ -110,12 +135,31 @@ export default function App() {
               <dt>Crystal</dt>
               <dd>Sapphire, boxed</dd>
             </div>
+            <div>
+              <dt>Lead time</dt>
+              <dd>14 months</dd>
+            </div>
           </dl>
-        </div>
 
-        <footer className="foot">
-          <span className="meta">Made to order · 24 pieces a year</span>
-        </footer>
+          <div className="reveal__buy">
+            <div className="qty">
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Fewer">
+                −
+              </button>
+              <span>{qty}</span>
+              <button onClick={() => setQty((q) => Math.min(2, q + 1))} aria-label="More">
+                +
+              </button>
+            </div>
+            <a className="buy" href="#reserve">
+              Reserve {qty === 1 ? 'one' : 'two'} <span className="arrow">↗</span>
+            </a>
+          </div>
+
+          <p className="reveal__note">
+            Two pieces per client, per lifetime. Payment on completion, never on order.
+          </p>
+        </div>
       </div>
 
       <section className="spacer" />

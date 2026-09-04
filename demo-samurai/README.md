@@ -9,30 +9,51 @@ npm install
 npm run dev
 ```
 
-![Hero: a samurai in armour, kabuto and kuwagata horns, right of centre](docs/hero.png)
+![Hero: a kabuto behind the headline, dark with a rim-lit edge](docs/hero.png)
 
-![Second beat: the armour has receded and the watch arrived, with the spec rail](docs/rail.png)
+![The cut: a hairline crossing the frame, the helmet glowing along it](docs/slash.png)
 
-Two beats, and the page has one idea: **the armour becomes the object.** A samurai bust holds
-the first screen; on scroll it recedes into the dark and the watch arrives from the right and
-settles face-on. The eleven generations in the headline are the transition, not a claim in the
-copy.
+![What the cut opens onto: price, specs, quantity and reserve](docs/reserve.png)
 
-## The armour
+Three beats. A kabuto sits behind the type, non-interactive, flat but shaded to feel
+dimensional. On scroll the screen is cut on a diagonal; the wound then widens into the
+reserve panel. The watch arrives underneath it.
 
-Kabuto, kuwagata, mempo, dō, sode and kusazuri, built from lathes and open cylinders and read
-almost entirely as silhouette with a rim light on the edges. That is not a dodge around low-poly
-modelling — armour photographed in a dark room looks exactly like this — but it is the reason a
-figure made of primitives holds up. Fully lit, it would read as a game asset.
+## The figure that had to stop being a figure
 
-One shape does most of the work: the **kuwagata**, the two brass horns rising from the brow. The
-first attempt was a near-closed torus as a crescent and it read as a handle on top of the helmet.
-Two horns in a V say "kabuto" instantly, even at this size and this dark. When a form has to be
-recognisable at a glance, find the one silhouette that carries the identity and spend the detail
-there — everything else can stay a shadow.
+The first version of this put a **modelled** samurai on the page — a bust of kabuto, mempo, dō and
+sode built from lathes and stacked cylinders. It looked like a mascot, and the honest read is that
+it was never going to look like anything else.
 
-Brass appears only on the crest. The red accent is spent on the seconds hand and the rule, and a
-third use would have cost the restraint its effect.
+Procedural geometry is good at objects and bad at figures. The failure is in proportion and
+anatomy, not shading, so no amount of material tuning reaches it. Five more drafts of a hand-coded
+2D silhouette of a full samurai went the same way: the arms merged with the head, and the gaps
+that survived landed beside the face, where small holes read as **eyes** and turn anything comic.
+
+The fix was to stop drawing a samurai and draw a **kabuto**. One object, no anatomy, no accidental
+faces, and it says "samurai" in a single glance. Reduce to the form you can execute perfectly,
+then execute it perfectly — that is now a section in
+[`art-direction.md`](../threejs-design/references/art-direction.md), along with the silhouette
+rules the bad drafts taught.
+
+## How a flat mark reads as an object
+
+The kabuto is a canvas drawing on a quad — genuinely 2D, no geometry. Everything dimensional is
+faked from the alpha: offsetting the mask against itself and taking the difference gives a lit
+edge on one side and a dark one opposite, and the eye reads a rim highlight as form. Wider taps
+add falloff inward so the middle is not flat, and the parallax moves the quad rather than any
+model. `raycast` returns null, so it is not interactive and cannot quietly eat clicks.
+
+## The cut
+
+A hairline in the DOM, because a one-pixel line stays one pixel at any DPR while a shader
+antialiases it into mush. The glow across the helmet is in the shader, and the two have to be the
+*same* stroke — so the shader computes its band in **screen space** from `gl_FragCoord`, not from
+UVs. The first attempt used a UV diagonal, which is at the mercy of the quad's position and
+aspect: the two landed on different lines and the page read as two unrelated events.
+
+The reserve panel is not faded in. It is always there, and a `clip-path` band centred on the same
+diagonal widens across it, so the content is revealed by the wound rather than by opacity.
 
 ## What the skill did and did not supply
 

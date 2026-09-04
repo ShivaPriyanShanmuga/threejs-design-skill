@@ -52,6 +52,69 @@ const profile = [
 The same applies to `ExtrudeGeometry` bevels and to any hand-built mesh: duplicate vertices where
 you want an edge, or accept a blob.
 
+## Know when not to model it
+
+Procedural geometry is very good at objects — machined, manufactured, geometric things with
+regular construction. It is very bad at **figures**. A person, an animal, a character built from
+lathes, boxes and spheres reads as a mascot, and no amount of material tuning rescues it, because
+the failure is in the proportions and the anatomy rather than the shading.
+
+There are only three honest options for a figure:
+
+1. **Use a real asset** — a modelled glTF from an artist or a library. Best result, needs the
+   asset.
+2. **Go graphic** — a flat 2D silhouette, shaded to feel dimensional. Often the *better* design
+   answer, not just the cheaper one: woodblock prints and film posters use silhouettes because
+   they are stronger, and a silhouette hides all the detail you cannot model.
+3. **Do not put a figure in it.** Find the object that carries the same meaning.
+
+Option 3 is underrated. A samurai is hard; a **kabuto** is easy and says the same thing in one
+glance. A cyclist is hard; a bike is easy. Reduce to the form you can execute perfectly, then
+execute it perfectly — a confident simple mark beats an ambitious bad one every time.
+
+### Drawing a silhouette that reads
+
+If you take the graphic route, the rules are not the same as modelling:
+
+- **The holes decide everything.** Background showing through — under an arm, between the legs,
+  inside a helmet — is what makes a shape legible. A silhouette with no holes is a blob.
+- **Small holes near a face read as eyes**, and turn anything comic instantly. Keep the gaps
+  large and low.
+- **Proportion first.** About seven and a half heads tall for a figure. A head at a quarter of
+  the height is a cartoon.
+- **Widest at the shoulders.** Wider hips than shoulders reads as a gown.
+- **One flat colour means overlaps are free.** Draw every part generously into its neighbour and
+  let the union be the shape. Do not try to assemble it like geometry.
+- **A few degrees of asymmetry**, or it reads as a robot.
+
+### Faking dimension on a flat mark
+
+A silhouette does not have to look flat. Offset the alpha mask against itself and take the
+difference: that is a lit edge on one side and a dark one opposite, which the eye reads as form.
+
+```glsl
+float m   = texture2D(uMap, vUv).a;
+vec2  L   = vec2(-0.004, 0.005);              // light direction, in UV
+float lit = clamp(m - texture2D(uMap, vUv - L).a, 0.0, 1.0);
+// wider taps give a soft falloff inward, so the middle is not flat
+```
+
+Add a gradient, a little grain, and parallax on the quad rather than on any geometry, and a flat
+mark sits in space convincingly. Two dozen lines of shader stand in for a model that would have
+taken an artist a day.
+
+### Making a DOM effect and a shader effect line up
+
+When a CSS element and a shader have to be the *same* object — a light streak crossing both — do
+the shader maths in **screen space**, not UV space. A UV-space diagonal is at the mercy of the
+quad's position, scale and aspect, so the two land on different lines and the page reads as two
+unrelated events. Pass the resolution in and work from `gl_FragCoord`:
+
+```glsl
+vec2 fc     = vec2(gl_FragCoord.x, uResolution.y - gl_FragCoord.y);  // CSS-style, y down
+float dist  = dot(fc - centre, normal);   // normal of the same angle the CSS uses
+```
+
 ## Composition
 
 The canvas is a frame. Treat it like one.

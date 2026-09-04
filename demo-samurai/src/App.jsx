@@ -14,6 +14,7 @@ export default function App() {
   const lede = useRef()
   const slash = useRef()
   const reveal = useRef()
+  const handle = useRef()
   const [qty, setQty] = useState(1)
 
   useEffect(() => {
@@ -51,8 +52,9 @@ export default function App() {
         const h = w * 130
         reveal.current.style.clipPath = `polygon(0% ${100 - h}%, 100% ${-h}%, 100% ${h}%, 0% ${100 + h}%)`
         reveal.current.style.visibility = w > 0.005 ? 'visible' : 'hidden'
-        reveal.current.style.pointerEvents = w > 0.6 ? 'auto' : 'none'
       }
+      // The watch becomes handleable at the same point; say so once, quietly.
+      if (handle.current) handle.current.style.opacity = ease(ramp(p, 0.62, 0.8)) * 0.9
     }
 
     lenis.on('scroll', ({ progress }) => apply(progress || 0))
@@ -115,6 +117,10 @@ export default function App() {
           <span className="meta">Made to order · 24 pieces a year</span>
         </footer>
       </div>
+
+      <p className="handle" ref={handle} aria-hidden="true">
+        Drag to examine
+      </p>
 
       {/* revealed through the cut */}
       <div className="reveal" ref={reveal}>

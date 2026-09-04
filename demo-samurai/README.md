@@ -13,11 +13,18 @@ npm run dev
 
 ![The cut: a hairline crossing the frame, the helmet glowing along it](docs/slash.png)
 
-![What the cut opens onto: price, specs, quantity and reserve](docs/reserve.png)
+![What the cut opens onto: the watch on the left, price and reserve on the right](docs/reserve.png)
+
+![The watch turned to its profile by dragging](docs/examine.png)
 
 Three beats. A kabuto sits behind the type, non-interactive, flat but shaded to feel
-dimensional. On scroll the screen is cut on a diagonal; the wound then widens into the
-reserve panel. The watch arrives underneath it.
+dimensional. On scroll the screen is cut on a diagonal; the wound widens into the reserve
+panel on the right, and the watch settles on the left where **you can pick it up and turn
+it** — free yaw, so a full turn shows the caseback, and clamped pitch, because past vertical
+it stops reading as an object in the hand and starts reading as a broken transform.
+
+The idle rotation stops the moment it becomes yours to handle: something that keeps drifting
+while you are trying to look at it feels broken rather than alive.
 
 ## The figure that had to stop being a figure
 
@@ -43,6 +50,22 @@ faked from the alpha: offsetting the mask against itself and taking the differen
 edge on one side and a dark one opposite, and the eye reads a rim highlight as form. Wider taps
 add falloff inward so the middle is not flat, and the parallax moves the quad rather than any
 model. `raycast` returns null, so it is not interactive and cannot quietly eat clicks.
+
+## Handing the object over
+
+Pitch lives on the outer group and yaw on the inner one. A single euler triple carrying both
+gimbals and starts rolling the watch, which is exactly what stops it feeling like a real thing
+being turned. Drag deltas move a target, the rendered value damps toward it, and release
+velocity is kept in radians per second so a throw decays the same at any frame rate.
+
+Two details that decide whether it feels right rather than merely works:
+
+- **The overlay must not take pointer events.** The reserve panel covers the full viewport so
+  its clip-path can open across the whole diagonal — so `.reveal` is `pointer-events: none` and
+  only `.reveal__panel` re-enables them. Otherwise an invisible sheet sits over the watch and
+  swallows every drag aimed at it.
+- **Accumulated yaw is wrapped** to (−π, π]. Without it, spinning the watch a few turns and then
+  scrolling away unwinds every one of them on screen.
 
 ## The cut
 
